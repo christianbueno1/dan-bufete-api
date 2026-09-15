@@ -4,12 +4,12 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-ENV_FILE="$PROJECT_ROOT/.env"
+ENV_FILE="$PROJECT_ROOT/.env.db"
 
 if [[ ! -f "$ENV_FILE" ]]; then
     echo "Error: $ENV_FILE not found."
-    echo "Create it from .env.example:"
-    echo "  cp .env.example .env"
+    echo "Create it from .env.db.example:"
+    echo "  cp .env.db.example .env.db"
     exit 1
 fi
 
