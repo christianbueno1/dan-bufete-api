@@ -1,43 +1,30 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+# src/dan_bufete_api/database.py
+
+from collections.abc import Generator
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
+from dan_bufete_api.config import get_settings
 
-class Settings(BaseSettings):
-    database_host: str
-    database_port: int
-    database_user: str
-    database_password: str
-    database_name: str
-
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-    )
-
-
-settings = Settings()
-
-DATABASE_URL = (
-    f"postgresql+psycopg://"
-    f"{settings.database_user}:"
-    f"{settings.database_password}@"
-    f"{settings.database_host}:"
-    f"{settings.database_port}/"
-    f"{settings.database_name}"
-)
+settings = get_settings()
 
 engine = create_engine(
-    DATABASE_URL,
-    echo=True,
+    settings.database_url,
+    pool_pre_ping=True,
+    echo=settings.debug,
 )
 
-SessionLocal = sessionmaker(
-    bind=engine,
-    autoflush=False,
-    autocommit=False,
-)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
 
 class Base(DeclarativeBase):
     pass
+
+
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

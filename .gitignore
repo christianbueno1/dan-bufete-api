@@ -8,14 +8,6 @@ __pycache__/
 .python-version
 
 # ==========================================
-# Environment Variables & Secrets (CRITICAL)
-# ==========================================
-.env
-.env.*
-!.env.*.example
-secret.key
-
-# ==========================================
 # Virtual Environments
 # ==========================================
 .venv/
@@ -56,3 +48,12 @@ htmlcov/
 # ==========================================
 .DS_Store
 Thumbs.db
+
+# ==========================================
+# Environment Variables & Secrets (CRITICAL)
+# ==========================================
+.env
+.env.db
+!.env.example
+!.env.db.example
+secret.key
