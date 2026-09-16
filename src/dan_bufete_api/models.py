@@ -1,13 +1,37 @@
 # src/dan_bufete_api/models.py
 
 import enum
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from dan_bufete_api.database import Base
+
+
+class PracticeArea(str, enum.Enum):
+    COMMERCIAL = "COMMERCIAL"
+    CIVIL = "CIVIL"
+    CRIMINAL = "CRIMINAL"
+    LABOR = "LABOR"
+    FAMILY = "FAMILY"
+    ADMINISTRATIVE = "ADMINISTRATIVE"
+    TAX = "TAX"
+    CONSTITUTIONAL = "CONSTITUTIONAL"
+
+    @property
+    def code(self) -> str:
+        return {
+            PracticeArea.COMMERCIAL: "COM",
+            PracticeArea.CIVIL: "CIV",
+            PracticeArea.CRIMINAL: "CRI",
+            PracticeArea.LABOR: "LAB",
+            PracticeArea.FAMILY: "FAM",
+            PracticeArea.ADMINISTRATIVE: "ADM",
+            PracticeArea.TAX: "TAX",
+            PracticeArea.CONSTITUTIONAL: "CON",
+        }[self]
 
 
 class CaseStatus(str, enum.Enum):
@@ -31,19 +55,30 @@ class DocumentType(str, enum.Enum):
     OTHER = "other"
 
 
+class CaseNumberSequence(Base):
+    """Contador atómico por (practice_area, year) para generar case_number."""
+
+    __tablename__ = "case_number_sequences"
+
+    practice_area: Mapped[PracticeArea] = mapped_column(primary_key=True)
+    year: Mapped[int] = mapped_column(primary_key=True)
+    last_value: Mapped[int] = mapped_column(default=0)
+
+
 class Case(Base):
     __tablename__ = "cases"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     case_number: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    practice_area: Mapped[PracticeArea]
     title: Mapped[str] = mapped_column(String(255))
     description: Mapped[str] = mapped_column(Text)
     client_name: Mapped[str] = mapped_column(String(255))
     lawyer_name: Mapped[str] = mapped_column(String(255))
-    case_type: Mapped[str] = mapped_column(String(100))
     priority: Mapped[CasePriority] = mapped_column(default=CasePriority.MEDIUM)
     status: Mapped[CaseStatus] = mapped_column(default=CaseStatus.OPEN)
 
+    filing_date: Mapped[date | None] = mapped_column(default=None)
     opened_at: Mapped[datetime] = mapped_column(server_default=func.now())
     closed_at: Mapped[datetime | None] = mapped_column(default=None)
 
