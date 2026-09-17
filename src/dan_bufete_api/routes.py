@@ -1,6 +1,6 @@
 # src/dan_bufete_api/routes.py
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
@@ -47,13 +47,15 @@ def get_case_or_404(db: Session, case_id: int) -> models.Case:
 # ---------- Case ----------
 
 
-@router.post("/cases", response_model=schemas.CaseRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/cases", response_model=schemas.CaseRead, status_code=status.HTTP_201_CREATED
+)
 def create_case(payload: schemas.CaseCreate, db: Session = Depends(get_db)):
     case_number = next_case_number(db, payload.practice_area)
 
     case = models.Case(
         case_number=case_number,
-        opened_at=payload.opened_at or datetime.now(),
+        opened_at=payload.opened_at or datetime.now(UTC),
         **payload.model_dump(exclude={"opened_at"}),
     )
     db.add(case)
@@ -84,10 +86,16 @@ def get_case(case_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/cases/{case_id}", response_model=schemas.CaseRead)
-def update_case(case_id: int, payload: schemas.CaseUpdate, db: Session = Depends(get_db)):
+def update_case(
+    case_id: int, payload: schemas.CaseUpdate, db: Session = Depends(get_db)
+):
     case = get_case_or_404(db, case_id)
+    updates = payload.model_dump(exclude_unset=True)
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    if updates.get("status") == models.CaseStatus.CLOSED and case.closed_at is None:
+        updates["closed_at"] = datetime.now(UTC)
+
+    for field, value in updates.items():
         setattr(case, field, value)
 
     db.commit()

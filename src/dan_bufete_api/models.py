@@ -1,9 +1,9 @@
 # src/dan_bufete_api/models.py
 
 import enum
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -79,17 +79,22 @@ class Case(Base):
     status: Mapped[CaseStatus] = mapped_column(default=CaseStatus.OPEN)
 
     filing_date: Mapped[date | None] = mapped_column(default=None)
-    opened_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    closed_at: Mapped[datetime | None] = mapped_column(default=None)
+    opened_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    closed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
     documents: Mapped[list["CaseDocument"]] = relationship(
-        back_populates="case",
-        cascade="all, delete-orphan",
+        back_populates="case", cascade="all, delete-orphan"
     )
 
 
@@ -102,6 +107,8 @@ class CaseDocument(Base):
     document_type: Mapped[DocumentType]
     file_url: Mapped[str] = mapped_column(String(500))
     uploaded_by: Mapped[str] = mapped_column(String(255))
-    uploaded_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    uploaded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     case: Mapped["Case"] = relationship(back_populates="documents")
