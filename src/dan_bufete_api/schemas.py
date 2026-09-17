@@ -1,8 +1,8 @@
 # src/dan_bufete_api/schemas.py
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from dan_bufete_api.models import CasePriority, CaseStatus, DocumentType, PracticeArea
 
@@ -10,11 +10,13 @@ from dan_bufete_api.models import CasePriority, CaseStatus, DocumentType, Practi
 
 
 class CaseBase(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     practice_area: PracticeArea
-    title: str
-    description: str
-    client_name: str
-    lawyer_name: str
+    title: str = Field(min_length=3, max_length=255)
+    description: str = Field(min_length=10)
+    client_name: str = Field(min_length=2, max_length=255)
+    lawyer_name: str = Field(min_length=2, max_length=255)
     priority: CasePriority = CasePriority.MEDIUM
     status: CaseStatus = CaseStatus.OPEN
 
@@ -23,16 +25,39 @@ class CaseCreate(CaseBase):
     filing_date: date | None = None
     opened_at: datetime | None = None
 
+    @field_validator("filing_date")
+    @classmethod
+    def filing_date_not_future(cls, value: date | None) -> date | None:
+        if value is not None and value > date.today():
+            raise ValueError("filing_date cannot be in the future")
+        return value
+
+    @field_validator("opened_at")
+    @classmethod
+    def opened_at_not_future(cls, value: datetime | None) -> datetime | None:
+        if value is not None and value > datetime.now(UTC):
+            raise ValueError("opened_at cannot be in the future")
+        return value
+
 
 class CaseUpdate(BaseModel):
-    title: str | None = None
-    description: str | None = None
-    client_name: str | None = None
-    lawyer_name: str | None = None
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    title: str | None = Field(default=None, min_length=3, max_length=255)
+    description: str | None = Field(default=None, min_length=10)
+    client_name: str | None = Field(default=None, min_length=2, max_length=255)
+    lawyer_name: str | None = Field(default=None, min_length=2, max_length=255)
     priority: CasePriority | None = None
     status: CaseStatus | None = None
     filing_date: date | None = None
     closed_at: datetime | None = None
+
+    @field_validator("filing_date")
+    @classmethod
+    def filing_date_not_future(cls, value: date | None) -> date | None:
+        if value is not None and value > date.today():
+            raise ValueError("filing_date cannot be in the future")
+        return value
 
 
 class CaseRead(CaseBase):
@@ -55,14 +80,15 @@ class CaseReadWithDocuments(CaseRead):
 
 
 class CaseDocumentBase(BaseModel):
-    name: str
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str = Field(min_length=1, max_length=255)
     document_type: DocumentType
-    file_url: str
-    uploaded_by: str
+    uploaded_by: str = Field(min_length=2, max_length=255)
 
 
 class CaseDocumentCreate(CaseDocumentBase):
-    pass
+    file_url: str = Field(min_length=1, max_length=500)
 
 
 class CaseDocumentRead(CaseDocumentBase):
@@ -70,6 +96,7 @@ class CaseDocumentRead(CaseDocumentBase):
 
     id: int
     case_id: int
+    file_url: str
     uploaded_at: datetime
 
 

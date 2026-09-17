@@ -2,12 +2,13 @@
 
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Form, File, HTTPException, UploadFile, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from dan_bufete_api import models, schemas
 from dan_bufete_api.database import get_db
+from dan_bufete_api.storage import get_storage_backend, StorageBackend
 
 router = APIRouter()
 
@@ -92,6 +93,13 @@ def update_case(
     case = get_case_or_404(db, case_id)
     updates = payload.model_dump(exclude_unset=True)
 
+    if "closed_at" in updates and updates["closed_at"] is not None:
+        if updates["closed_at"] < case.opened_at:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "closed_at cannot be earlier than opened_at",
+            )
+
     if updates.get("status") == models.CaseStatus.CLOSED and case.closed_at is None:
         updates["closed_at"] = datetime.now(UTC)
 
@@ -143,7 +151,12 @@ def list_case_documents(case_id: int, db: Session = Depends(get_db)):
 @router.delete(
     "/cases/{case_id}/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT
 )
-def delete_case_document(case_id: int, document_id: int, db: Session = Depends(get_db)):
+def delete_case_document(
+    case_id: int,
+    document_id: int,
+    db: Session = Depends(get_db),
+    storage: StorageBackend = Depends(get_storage_backend),
+):
     document = (
         db.query(models.CaseDocument)
         .filter(
@@ -155,5 +168,37 @@ def delete_case_document(case_id: int, document_id: int, db: Session = Depends(g
     if document is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
 
+    storage.delete(document.file_url)
     db.delete(document)
     db.commit()
+
+
+@router.post(
+    "/cases/{case_id}/documents/upload",
+    response_model=schemas.CaseDocumentRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def upload_case_document(
+    case_id: int,
+    file: UploadFile,
+    document_type: models.DocumentType = Form(...),
+    uploaded_by: str = Form(...),
+    name: str | None = Form(None),
+    db: Session = Depends(get_db),
+    storage: StorageBackend = Depends(get_storage_backend),
+):
+    get_case_or_404(db, case_id)
+
+    file_url = storage.save(file)
+
+    document = models.CaseDocument(
+        case_id=case_id,
+        name=name or file.filename or "untitled",
+        document_type=document_type,
+        file_url=file_url,
+        uploaded_by=uploaded_by,
+    )
+    db.add(document)
+    db.commit()
+    db.refresh(document)
+    return document
