@@ -1,7 +1,7 @@
 # src/dan_bufete_api/models.py
 
 import enum
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -94,7 +94,8 @@ class Case(Base):
     )
 
     documents: Mapped[list["CaseDocument"]] = relationship(
-        back_populates="case", cascade="all, delete-orphan"
+        back_populates="case",
+        cascade="all, delete-orphan",
     )
 
 
