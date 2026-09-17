@@ -74,6 +74,18 @@ curl -s http://localhost:8000/cases/1 | jq '.documents'
 # Probar el delete y confirmar que el archivo desaparece del disco también
 curl -s -X DELETE http://localhost:8000/cases/1/documents/1 -w "\n%{http_code}\n"
 ls -la data/uploads/
+
+# Debe fallar con 422 — fecha futura
+curl -s -X POST http://localhost:8000/cases \
+  -H "Content-Type: application/json" \
+  -d '{
+    "practice_area": "CIVIL",
+    "title": "Caso futuro",
+    "description": "Prueba de validación",
+    "client_name": "Test",
+    "lawyer_name": "Test",
+    "opened_at": "2099-01-01T00:00:00Z"
+  }' -w "\n%{http_code}\n"
 ```
 
 ## Recrear el esquema y verificar
