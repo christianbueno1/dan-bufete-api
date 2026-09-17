@@ -27,7 +27,7 @@ curl -s -X POST http://localhost:8000/cases \
     "description": "Incumplimiento de contrato comercial",
     "client_name": "Acme Corp",
     "lawyer_name": "Dr. Pérez"
-  }' | python3 -m json.tool
+  }' | jq
 
 # 2. Listar casos
 curl -s http://localhost:8000/cases | python3 -m json.tool
@@ -72,3 +72,5 @@ Base.metadata.create_all(bind=engine)
 print('Tablas recreadas:', list(Base.metadata.tables.keys()))
 "
 ```
+
+API_URL=http://localhost:8000
