@@ -60,6 +60,20 @@ curl -s -X POST http://localhost:8000/cases/1/documents \
 # 6. Confirmar que el caso ahora trae el documento anidado
 curl -s http://localhost:8000/cases/1 | jq
 
+# document upload
+echo "contenido de prueba" > /tmp/contrato-test.pdf
+
+curl -s -X POST http://localhost:8000/cases/1/documents/upload \
+  -F "file=@/tmp/contrato-test.pdf" \
+  -F "document_type=contract" \
+  -F "uploaded_by=chris" \
+  -F "name=Contrato de prueba" | jq
+
+curl -s http://localhost:8000/cases/1 | jq '.documents'
+
+# Probar el delete y confirmar que el archivo desaparece del disco también
+curl -s -X DELETE http://localhost:8000/cases/1/documents/1 -w "\n%{http_code}\n"
+ls -la data/uploads/
 ```
 
 ## Recrear el esquema y verificar
