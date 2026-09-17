@@ -56,3 +56,6 @@ curl -s -X POST http://localhost:8000/cases/1/documents \
     "file_url": "https://christianbueno.work/cv-es.pdf",
     "uploaded_by": "chris"
   }' | jq
+
+# 6. Confirmar que el caso ahora trae el documento anidado
+curl -s http://localhost:8000/cases/1 | jq
