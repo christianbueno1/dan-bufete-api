@@ -59,3 +59,16 @@ curl -s -X POST http://localhost:8000/cases/1/documents \
 
 # 6. Confirmar que el caso ahora trae el documento anidado
 curl -s http://localhost:8000/cases/1 | jq
+
+```
+
+## Recrear el esquema y verificar
+```bash
+uv run python -c "
+from dan_bufete_api.database import Base, engine
+from dan_bufete_api import models
+Base.metadata.drop_all(bind=engine)
+Base.metadata.create_all(bind=engine)
+print('Tablas recreadas:', list(Base.metadata.tables.keys()))
+"
+```
