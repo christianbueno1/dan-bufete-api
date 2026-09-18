@@ -26,7 +26,8 @@ curl -s -X POST http://localhost:8000/cases \
     "title": "Disputa contractual",
     "description": "Incumplimiento de contrato comercial",
     "client_name": "Acme Corp",
-    "lawyer_name": "Dr. Pérez"
+    "lawyer_name": "Dr. Pérez",
+    "opened_at": "2026-08-30T10:00:00Z"
   }' | jq
 
 # 2. Listar casos
