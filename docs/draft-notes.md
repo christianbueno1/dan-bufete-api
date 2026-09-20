@@ -15,6 +15,8 @@ podman exec -it dan-bufete-db-box psql -U krs -d dan_bufete_db -c "\dt"
 podman exec -it dan-bufete-db-box psql -U krs -d dan_bufete_db -x -c "select * from cases;"
 
 ```
+# Esto es especialmente útil ahora porque queremos inspeccionar los datos que realmente devuelve la API, no solamente leer API_REFERENCE.md.
+curl -s http://localhost:8000/cases | python3 -m json.tool
 
 ## test endpoints
 ```bash
@@ -31,7 +33,6 @@ curl -s -X POST http://localhost:8000/cases \
   }' | jq
 
 # 2. Listar casos
-curl -s http://localhost:8000/cases | python3 -m json.tool
 curl -s http://localhost:8000/cases | jq
 
 # 3. Crear otro caso de la misma área para confirmar la secuencia
