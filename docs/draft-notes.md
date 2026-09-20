@@ -102,3 +102,8 @@ print('Tablas recreadas:', list(Base.metadata.tables.keys()))
 ```
 
 API_URL=http://localhost:8000
+
+## Scripts
+```bash
+chmod +x scripts/api-smoke-test.sh
+```
