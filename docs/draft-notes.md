@@ -49,6 +49,10 @@ curl -s -X POST http://localhost:8000/cases \
 # 4. Obtener el detalle del primer caso (usa el "id" que te devolvió el paso 1, no el case_number)
 curl -s http://localhost:8000/cases/1 | jq
 
+# delete case
+curl -s -X DELETE http://localhost:8000/cases/5 -w "\n%{http_code}\n"
+curl -s http://localhost:8000/cases | jq
+
 # 5. Agregarle un documento
 curl -s -X POST http://localhost:8000/cases/1/documents \
   -H "Content-Type: application/json" \
