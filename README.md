@@ -111,6 +111,11 @@ Para más detalle sobre patrones, decisiones de diseño y validaciones, ver [`do
 | `DELETE` | `/cases/{id}/documents/{doc_id}` | Eliminar un documento (registro + archivo) |
 | `GET` | `/files/{storage_key}` | Servir el archivo físico (estático, sin auth) |
 
+## Feed de la base de datos
+```bash
+uv run python scripts/seed_db.py
+```
+
 ## Licencia
 
 Privado — uso interno.

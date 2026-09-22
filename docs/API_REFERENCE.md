@@ -351,7 +351,7 @@ Lista los documentos de un caso.
 ```bash
 curl http://localhost:8000/cases/1/documents
 ```
-
+\
 **Respuesta `200 OK`**
 
 ```json
@@ -422,4 +422,3 @@ Swagger UI y ReDoc se generan automáticamente a partir de este mismo esquema:
 
 - http://localhost:8000/docs
 - http://localhost:8000/redoc
-  
