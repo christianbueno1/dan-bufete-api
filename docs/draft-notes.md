@@ -54,7 +54,7 @@ curl -s -X DELETE http://localhost:8000/cases/5 -w "\n%{http_code}\n"
 curl -s http://localhost:8000/cases | jq
 
 # 5. Agregarle un documento
-curl -s -X POST http://localhost:8000/cases/1/documents \
+curl -s -X POST http://localhost:8000/cases/16/documents \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Contrato original.pdf",
@@ -69,7 +69,7 @@ curl -s http://localhost:8000/cases/1 | jq
 # document upload
 echo "contenido de prueba" > /tmp/contrato-test.pdf
 
-curl -s -X POST http://localhost:8000/cases/1/documents/upload \
+curl -s -X POST http://localhost:8000/cases/16/documents/upload \
   -F "file=@/tmp/contrato-test.pdf" \
   -F "document_type=contract" \
   -F "uploaded_by=chris" \
