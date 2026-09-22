@@ -87,10 +87,6 @@ class CaseDocumentBase(BaseModel):
     uploaded_by: str = Field(min_length=2, max_length=255)
 
 
-class CaseDocumentCreate(CaseDocumentBase):
-    file_url: str = Field(min_length=1, max_length=500)
-
-
 class CaseDocumentRead(CaseDocumentBase):
     model_config = ConfigDict(from_attributes=True)
 

@@ -82,8 +82,16 @@ def list_cases(
 
 
 @router.get("/cases/{case_id}", response_model=schemas.CaseReadWithDocuments)
-def get_case(case_id: int, db: Session = Depends(get_db)):
-    return get_case_or_404(db, case_id)
+def get_case(
+    case_id: int,
+    db: Session = Depends(get_db),
+    storage: StorageBackend = Depends(get_storage_backend),
+):
+    case = get_case_or_404(db, case_id)
+    return schemas.CaseReadWithDocuments(
+        **schemas.CaseRead.model_validate(case).model_dump(),
+        documents=[to_document_read(d, storage) for d in case.documents],
+    )
 
 
 @router.patch("/cases/{case_id}", response_model=schemas.CaseRead)
@@ -117,35 +125,35 @@ def delete_case(case_id: int, db: Session = Depends(get_db)):
     db.delete(case)
     db.commit()
 
+# ---- Document -----
 
-# ---------- CaseDocument (nested under Case) ----------
-
-
-@router.post(
-    "/cases/{case_id}/documents",
-    response_model=schemas.CaseDocumentRead,
-    status_code=status.HTTP_201_CREATED,
-)
-def create_case_document(
-    case_id: int, payload: schemas.CaseDocumentCreate, db: Session = Depends(get_db)
-):
-    get_case_or_404(db, case_id)
-
-    document = models.CaseDocument(case_id=case_id, **payload.model_dump())
-    db.add(document)
-    db.commit()
-    db.refresh(document)
-    return document
+def to_document_read(
+    document: models.CaseDocument, storage: StorageBackend
+) -> schemas.CaseDocumentRead:
+    return schemas.CaseDocumentRead(
+        id=document.id,
+        case_id=document.case_id,
+        name=document.name,
+        document_type=document.document_type,
+        uploaded_by=document.uploaded_by,
+        uploaded_at=document.uploaded_at,
+        file_url=storage.get_url(document.storage_key),
+    )
 
 
 @router.get("/cases/{case_id}/documents", response_model=list[schemas.CaseDocumentRead])
-def list_case_documents(case_id: int, db: Session = Depends(get_db)):
+def list_case_documents(
+    case_id: int,
+    db: Session = Depends(get_db),
+    storage: StorageBackend = Depends(get_storage_backend),
+):
     get_case_or_404(db, case_id)
-    return (
+    documents = (
         db.query(models.CaseDocument)
         .filter(models.CaseDocument.case_id == case_id)
         .all()
     )
+    return [to_document_read(d, storage) for d in documents]
 
 
 @router.delete(
@@ -168,7 +176,7 @@ def delete_case_document(
     if document is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
 
-    storage.delete(document.file_url)
+    storage.delete(document.storage_key)
     db.delete(document)
     db.commit()
 
@@ -189,16 +197,16 @@ def upload_case_document(
 ):
     get_case_or_404(db, case_id)
 
-    file_url = storage.save(file)
+    storage_key = storage.save(file)
 
     document = models.CaseDocument(
         case_id=case_id,
         name=name or file.filename or "untitled",
         document_type=document_type,
-        file_url=file_url,
+        storage_key=storage_key,
         uploaded_by=uploaded_by,
     )
     db.add(document)
     db.commit()
     db.refresh(document)
-    return document
+    return to_document_read(document, storage)

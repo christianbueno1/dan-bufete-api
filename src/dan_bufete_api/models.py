@@ -106,7 +106,7 @@ class CaseDocument(Base):
     case_id: Mapped[int] = mapped_column(ForeignKey("cases.id", ondelete="CASCADE"))
     name: Mapped[str] = mapped_column(String(255))
     document_type: Mapped[DocumentType]
-    file_url: Mapped[str] = mapped_column(String(500))
+    storage_key: Mapped[str] = mapped_column(String(500))   # antes: file_url
     uploaded_by: Mapped[str] = mapped_column(String(255))
     uploaded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
