@@ -62,37 +62,33 @@ Para detener y eliminar el contenedor:
 ./scripts/podman/teardown-db.sh
 ```
 
-### 4. Crear el esquema de base de datos
-
-```bash
-uv run python -c "
-from dan_bufete_api.database import Base, engine
-from dan_bufete_api import models
-Base.metadata.create_all(bind=engine)
-"
-```
-
 ## Ejecutar la API
 
 ```bash
 uv run uvicorn dan_bufete_api.main:app --reload
 ```
 
+El esquema de base de datos (`cases`, `case_documents`, `case_number_sequences`) se crea automáticamente al arrancar la aplicación (`Base.metadata.create_all()` en el `lifespan` de `main.py`) — no requiere ningún paso manual adicional tras levantar PostgreSQL.
+
 - API: http://localhost:8000
 - Documentación interactiva (Swagger UI): http://localhost:8000/docs
 - Documentación alternativa (ReDoc): http://localhost:8000/redoc
+
+## Almacenamiento de archivos
+
+Los documentos subidos se guardan en `data/uploads/` (backend local, ver `storage.py`) y se sirven directamente vía `StaticFiles` montado en `/files` (sin autenticación — suficiente para este ejercicio). La abstracción `StorageBackend` permite reemplazar este backend por uno en la nube (S3, Azure, DigitalOcean Spaces) sin tocar `routes.py`.
 
 ## Estructura del proyecto
 
 ```
 src/dan_bufete_api/
-├── main.py        # Punto de entrada de FastAPI, registro de routers
+├── main.py        # Punto de entrada de FastAPI, lifespan (create_all), mount de /files, registro de routers
 ├── config.py       # Settings (pydantic-settings), lee .env
 ├── database.py     # Engine, SessionLocal, Base declarativa, get_db()
 ├── models.py       # Modelos SQLAlchemy (Case, CaseDocument, enums)
 ├── schemas.py       # Schemas Pydantic (Create/Update/Read)
 ├── routes.py       # Endpoints CRUD, lógica de negocio
-└── storage.py       # Abstracción de almacenamiento de archivos
+└── storage.py       # Abstracción de almacenamiento de archivos (StorageBackend, LocalStorageBackend)
 
 scripts/podman/
 ├── setup-db.sh      # Levanta el contenedor de PostgreSQL
@@ -110,10 +106,10 @@ Para más detalle sobre patrones, decisiones de diseño y validaciones, ver [`do
 | `GET` | `/cases/{id}` | Obtener un caso con sus documentos |
 | `PATCH` | `/cases/{id}` | Actualizar un caso |
 | `DELETE` | `/cases/{id}` | Eliminar un caso (y sus documentos en cascada) |
-| `POST` | `/cases/{id}/documents` | Registrar un documento (URL ya existente) |
-| `POST` | `/cases/{id}/documents/upload` | Subir un archivo físico |
+| `POST` | `/cases/{id}/documents/upload` | Subir un archivo físico (multipart/form-data) |
 | `GET` | `/cases/{id}/documents` | Listar documentos de un caso |
 | `DELETE` | `/cases/{id}/documents/{doc_id}` | Eliminar un documento (registro + archivo) |
+| `GET` | `/files/{storage_key}` | Servir el archivo físico (estático, sin auth) |
 
 ## Licencia
 

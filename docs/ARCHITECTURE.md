@@ -23,9 +23,13 @@ storage.py   → Abstracción de almacenamiento de archivos
 
 ### Strategy / Repository — `storage.py`
 
-`StorageBackend` es una clase abstracta (`ABC`) que define el contrato (`save`, `delete`) para cualquier backend de almacenamiento de archivos. Hoy solo existe `LocalStorageBackend` (disco local, usado en desarrollo), pero el diseño permite agregar `S3StorageBackend`, `AzureBlobStorageBackend` o `DigitalOceanSpacesStorageBackend` sin tocar `routes.py` — solo cambia qué implementación devuelve `get_storage_backend()`.
+`StorageBackend` es una clase abstracta (`ABC`) que define el contrato (`save`, `delete`, `get_url`) para cualquier backend de almacenamiento de archivos. Hoy solo existe `LocalStorageBackend` (disco local, usado en desarrollo, servido vía `StaticFiles` montado en `/files`), pero el diseño permite agregar `S3StorageBackend`, `AzureBlobStorageBackend` o `DigitalOceanSpacesStorageBackend` sin tocar `routes.py` — solo cambia qué implementación devuelve `get_storage_backend()`.
 
 Motivo: desacoplar la lógica de negocio (subir/borrar un documento de un caso) del proveedor de almacenamiento físico, que casi con certeza va a cambiar entre desarrollo y producción.
+
+**`storage_key` vs. URL pública.** `save()` devuelve una `storage_key` (identificador interno, ej. un UUID), no una URL — es lo único que se persiste en `CaseDocument.storage_key`. La URL servible al cliente (`file_url` en las respuestas) se calcula bajo demanda con `get_url(storage_key)`. Esta separación es la que permite que la DB no quede acoplada al backend activo: con `LocalStorageBackend`, `get_url` concatena `/files/{storage_key}`; con un backend de nube, devolvería la URL pública o firmada del proveedor — sin migrar datos ni tocar `models.py`.
+
+Como consecuencia, ningún endpoint acepta `storage_key`/`file_url` como input del cliente — siempre lo genera el backend en `save()`. Esto también cierra una superficie de path traversal: `LocalStorageBackend.delete()` resuelve la ruta final y verifica que quede dentro de `base_dir` antes de borrar, como defensa en profundidad aunque hoy `storage_key` nunca llegue desde fuera del propio backend.
 
 ### UPSERT atómico para secuencias — generación de `case_number`
 
@@ -36,6 +40,8 @@ Motivo: la alternativa ingenua (`SELECT MAX(...) + 1`) tiene una condición de c
 ### Schemas separados por operación (Create / Update / Read)
 
 Cada entidad tiene `EntityCreate` (validación estricta de entrada), `EntityUpdate` (todos los campos opcionales, semántica `PATCH` parcial vía `exclude_unset=True`) y `EntityRead` (lo que se expone al cliente, con `from_attributes=True` para construirse directo desde el ORM). `CaseReadWithDocuments` extiende `CaseRead` agregando la relación anidada, separado del `CaseRead` plano para evitar sobrecargar el listado (`GET /cases`) con datos que no necesita.
+
+`CaseDocument` es la excepción a "construcción directa desde el ORM": como `CaseDocumentRead.file_url` no es un atributo del modelo (el modelo solo tiene `storage_key`), se construye explícitamente vía un helper (`to_document_read`) que combina los campos del ORM con `storage.get_url(document.storage_key)`, en vez de depender de `from_attributes=True`.
 
 ## Modelo de datos — decisiones clave
 
@@ -88,13 +94,17 @@ Los valores del enum (`COMMERCIAL`, `CIVIL`, `CRIMINAL`, etc.) se mantienen en i
 
 La base de datos corre en un contenedor Podman (imagen `postgres:18.6-trixie`), gestionado por los scripts `scripts/podman/setup-db.sh` y `teardown-db.sh`, que leen su configuración de `.env.db` — completamente separado de `.env` (configuración de la API), para que cada archivo tenga una única responsabilidad.
 
+### Creación del esquema — `lifespan` de FastAPI
+
+`Base.metadata.create_all(bind=engine)` se ejecuta automáticamente en el `lifespan` de `main.py` al arrancar la aplicación, contra cualquier base de datos vacía levantada con `setup-db.sh`. No requiere ningún paso manual adicional. Es idempotente y no destructivo (no altera ni recrea tablas existentes), suficiente en esta fase de prototipo — ver Roadmap para el reemplazo con Alembic.
+
 ### `.gitignore` — regla de env vars al final del archivo
 
 La sección de variables de entorno/secretos se ubica deliberadamente al **final** de `.gitignore`. Git aplica la última regla que matchea un archivo dado (no la más específica), así que si esa sección estuviera en medio del archivo, una regla genérica posterior (como `*.db`, pensada para SQLite) podría terminar "decidiendo" el resultado en vez de la regla explícita para `.env`/`.env.db` — funcionalmente correcto por coincidencia, pero fràgil ante cualquier cambio futuro en otras secciones.
 
 ## Pendiente / roadmap técnico
 
-- Migraciones con Alembic (hoy se usa `Base.metadata.create_all()` / `drop_all()`, válido solo en fase de prototipo).
+- Migraciones con Alembic (hoy se usa `Base.metadata.create_all()`, ejecutado automáticamente en el `lifespan` — válido solo en fase de prototipo, ya que no altera tablas ya creadas).
 - Tests automatizados (pytest).
 - Manejo global de excepciones (`IntegrityError` de PostgreSQL → respuesta HTTP controlada).
 - Configuración de CORS para el frontend Angular.

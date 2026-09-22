@@ -201,7 +201,7 @@ curl http://localhost:8000/cases/1
     {
       "name": "Contrato original.pdf",
       "document_type": "contract",
-      "file_url": "data/uploads/450c3b9a-....pdf",
+      "file_url": "/files/450c3b9a-c019-4a46-8cc0-6f79764d1167.pdf",
       "uploaded_by": "chris",
       "id": 1,
       "case_id": 1,
@@ -292,58 +292,11 @@ curl -X DELETE http://localhost:8000/cases/1
 
 Recursos anidados bajo `Case` — un `CaseDocument` no existe sin un caso asociado.
 
-### `POST /cases/{case_id}/documents`
-
-Registra un documento cuya `file_url` **ya existe** (por ejemplo, subido directo a un bucket externo desde el frontend con una URL prefirmada). No sube ningún archivo.
-
-**Body**
-
-| Campo | Tipo | Requerido | Reglas |
-|---|---|---|---|
-| `name` | `string` | Sí | 1–255 caracteres |
-| `document_type` | `DocumentType` | Sí | — |
-| `file_url` | `string` | Sí | 1–500 caracteres |
-| `uploaded_by` | `string` | Sí | 2–255 caracteres |
-
-**Ejemplo**
-
-```bash
-curl -X POST http://localhost:8000/cases/1/documents \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Contrato original.pdf",
-    "document_type": "contract",
-    "file_url": "https://example.com/files/contrato.pdf",
-    "uploaded_by": "chris"
-  }'
-```
-
-**Respuesta `201 Created`**
-
-```json
-{
-  "name": "Contrato original.pdf",
-  "document_type": "contract",
-  "file_url": "https://example.com/files/contrato.pdf",
-  "uploaded_by": "chris",
-  "id": 1,
-  "case_id": 1,
-  "uploaded_at": "2026-09-16T23:47:10.612362Z"
-}
-```
-
-**Errores**
-
-| Código | Causa |
-|---|---|
-| `404` | El `case_id` no existe |
-| `422` | Campos inválidos |
-
----
+Todo documento se crea exclusivamente vía subida física (`POST .../upload`); no existe forma de registrar un documento con una URL externa arbitraria — `storage_key` la genera siempre el `StorageBackend` activo, nunca el cliente.
 
 ### `POST /cases/{case_id}/documents/upload`
 
-Sube un archivo físico. El backend lo guarda mediante el `StorageBackend` activo (en desarrollo: disco local, `data/uploads/`) y genera `file_url` automáticamente.
+Sube un archivo físico. El backend lo guarda mediante el `StorageBackend` activo (en desarrollo: disco local, `data/uploads/`, servido en `/files`) y genera `storage_key`/`file_url` automáticamente.
 
 **Content-Type:** `multipart/form-data`
 
@@ -372,7 +325,7 @@ curl -X POST http://localhost:8000/cases/1/documents/upload \
 {
   "name": "Contrato de prueba",
   "document_type": "contract",
-  "file_url": "data/uploads/450c3b9a-c019-4a46-8cc0-6f79764d1167.pdf",
+  "file_url": "/files/450c3b9a-c019-4a46-8cc0-6f79764d1167.pdf",
   "uploaded_by": "chris",
   "id": 1,
   "case_id": 1,
@@ -406,7 +359,7 @@ curl http://localhost:8000/cases/1/documents
   {
     "name": "Contrato de prueba",
     "document_type": "contract",
-    "file_url": "data/uploads/450c3b9a-....pdf",
+    "file_url": "/files/450c3b9a-c019-4a46-8cc0-6f79764d1167.pdf",
     "uploaded_by": "chris",
     "id": 1,
     "case_id": 1,
@@ -443,9 +396,30 @@ curl -X DELETE http://localhost:8000/cases/1/documents/1
 
 ---
 
+## Archivos estáticos
+
+### `GET /files/{storage_key}`
+
+Sirve directamente el archivo físico desde `data/uploads/`, montado vía `StaticFiles`. Es la misma URL que devuelve `file_url` en las respuestas de `CaseDocument`. Sin autenticación — acceso directo por diseño para este ejercicio.
+
+**Ejemplo**
+
+```bash
+curl -O http://localhost:8000/files/450c3b9a-c019-4a46-8cc0-6f79764d1167.pdf
+```
+
+**Errores**
+
+| Código | Causa |
+|---|---|
+| `404` | No existe un archivo con ese `storage_key` |
+
+---
+
 ## Documentación interactiva
 
 Swagger UI y ReDoc se generan automáticamente a partir de este mismo esquema:
 
 - http://localhost:8000/docs
 - http://localhost:8000/redoc
+  
