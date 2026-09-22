@@ -111,3 +111,15 @@ API_URL=http://localhost:8000
 ```bash
 chmod +x scripts/api-smoke-test.sh
 ```
+
+# Temas
+### 4. Crear el esquema de base de datos
+
+```bash
+uv run python -c "
+from dan_bufete_api.database import Base, engine
+from dan_bufete_api import models
+Base.metadata.create_all(bind=engine)
+"
+```
+Opción A — create_all() en el arranque de la app (main.py)
