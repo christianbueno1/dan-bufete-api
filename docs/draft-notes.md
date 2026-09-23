@@ -69,8 +69,16 @@ curl -s http://localhost:8000/cases/1 | jq
 # document upload
 echo "contenido de prueba" > /tmp/contrato-test.pdf
 
-curl -s -X POST http://localhost:8000/cases/16/documents/upload \
+curl -s -X POST http://localhost:8000/cases/1/documents/upload \
   -F "file=@/tmp/contrato-test.pdf" \
+  -F "document_type=contract" \
+  -F "uploaded_by=chris" \
+  -F "name=Contrato de prueba" | jq
+
+file=/home/chris/Downloads/linux.png
+
+curl -s -X POST http://localhost:8000/cases/1/documents/upload \
+  -F "file=@$file" \
   -F "document_type=contract" \
   -F "uploaded_by=chris" \
   -F "name=Contrato de prueba" | jq
