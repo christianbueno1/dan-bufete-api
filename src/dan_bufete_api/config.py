@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     database_password: str
     database_name: str
     debug: bool = False
+    api_base_url: str = "http://localhost:8000"
 
     model_config = SettingsConfigDict(
         env_file=".env",

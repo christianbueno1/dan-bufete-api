@@ -7,6 +7,8 @@ from pathlib import Path
 
 from fastapi import UploadFile
 
+from dan_bufete_api.config import get_settings
+
 
 class StorageBackend(ABC):
     """Contrato que cualquier backend de almacenamiento debe cumplir.
@@ -26,17 +28,23 @@ class StorageBackend(ABC):
 
     @abstractmethod
     def get_url(self, storage_key: str) -> str:
-        """Devuelve la URL pública para acceder al archivo."""
+        """Devuelve la URL pública (absoluta) para acceder al archivo."""
         raise NotImplementedError
 
 
 class LocalStorageBackend(StorageBackend):
-    """Backend de desarrollo: guarda archivos en disco local, servidos vía StaticFiles."""
+    """Backend de desarrollo/producción simple: guarda archivos en disco local."""
 
-    def __init__(self, base_dir: str = "data/uploads", url_prefix: str = "/files"):
+    def __init__(
+        self,
+        base_dir: str = "data/uploads",
+        url_prefix: str = "/files",
+        base_url: str = "http://localhost:8000",
+    ):
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.url_prefix = url_prefix.rstrip("/")
+        self.base_url = base_url.rstrip("/")
 
     def save(self, file: UploadFile) -> str:
         extension = Path(file.filename or "").suffix
@@ -54,11 +62,9 @@ class LocalStorageBackend(StorageBackend):
             path.unlink()
 
     def get_url(self, storage_key: str) -> str:
-        return f"{self.url_prefix}/{storage_key}"
+        return f"{self.base_url}{self.url_prefix}/{storage_key}"
 
     def _safe_path(self, storage_key: str) -> Path:
-        # Aunque hoy storage_key siempre lo genera este backend, este check
-        # evita que un valor corrupto/manual escape de base_dir.
         candidate = (self.base_dir / storage_key).resolve()
         if self.base_dir.resolve() not in candidate.parents:
             raise ValueError("storage_key inválida")
@@ -67,4 +73,5 @@ class LocalStorageBackend(StorageBackend):
 
 def get_storage_backend() -> StorageBackend:
     """Factory: hoy siempre local; en el futuro lee de settings (STORAGE_BACKEND=s3, etc.)."""
-    return LocalStorageBackend()
+    settings = get_settings()
+    return LocalStorageBackend(base_url=settings.api_base_url)
