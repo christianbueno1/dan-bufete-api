@@ -79,14 +79,14 @@ file=/home/chris/Downloads/linux.png
 
 curl -s -X POST http://localhost:8000/cases/1/documents/upload \
   -F "file=@$file" \
-  -F "document_type=contract" \
-  -F "uploaded_by=chris" \
-  -F "name=Contrato de prueba" | jq
+  -F "document_type=evidence" \
+  -F "uploaded_by=krs" \
+  -F "name=Linux logo" | jq
 
 curl -s http://localhost:8000/cases/1 | jq '.documents'
 
 # Probar el delete y confirmar que el archivo desaparece del disco también
-curl -s -X DELETE http://localhost:8000/cases/1/documents/1 -w "\n%{http_code}\n"
+curl -s -X DELETE http://localhost:8000/cases/1/documents/2 -w "\n%{http_code}\n"
 ls -la data/uploads/
 
 # Debe fallar con 422 — fecha futura
