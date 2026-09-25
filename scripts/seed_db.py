@@ -24,7 +24,7 @@ now = datetime.now(UTC)
 SEED_CASES = [
     dict(
         practice_area=PracticeArea.COMMERCIAL,
-        title="Fraud Allegations Defense",
+        title="Defensa por Alegaciones de Fraude",
         description="Defensa de Mike Ross frente a alegaciones de ejercicio ilegal de la abogacía.",
         client_name="Mike Ross",
         lawyer_name="Harvey Specter",
@@ -35,7 +35,7 @@ SEED_CASES = [
     ),
     dict(
         practice_area=PracticeArea.LABOR,
-        title="Partnership Dispute Mediation",
+        title="Mediación de Disputa Societaria",
         description="Mediación de disputa societaria entre socios de la firma por Louis Litt.",
         client_name="Louis Litt",
         lawyer_name="Donna Paulsen",
@@ -46,7 +46,7 @@ SEED_CASES = [
     ),
     dict(
         practice_area=PracticeArea.CIVIL,
-        title="Firm Merger Litigation",
+        title="Litigio por Fusión de la Firma",
         description="Litigio derivado de la fusión de Pearson Hardman con Darby International.",
         client_name="Jessica Pearson",
         lawyer_name="Robert Zane",
@@ -58,7 +58,7 @@ SEED_CASES = [
     ),
     dict(
         practice_area=PracticeArea.FAMILY,
-        title="Estate Planning Consultation",
+        title="Consultoría de Planificación Patrimonial",
         description="Consultoría de planificación patrimonial para Rachel Zane.",
         client_name="Rachel Zane",
         lawyer_name="Katrina Bennett",
@@ -69,7 +69,7 @@ SEED_CASES = [
     ),
     dict(
         practice_area=PracticeArea.CRIMINAL,
-        title="Embezzlement Investigation",
+        title="Investigación por Malversación de Fondos",
         description="Investigación por malversación de fondos contra Daniel Hardman.",
         client_name="Daniel Hardman",
         lawyer_name="Jessica Pearson",
@@ -80,7 +80,7 @@ SEED_CASES = [
     ),
     dict(
         practice_area=PracticeArea.TAX,
-        title="SEC Tax Fraud Inquiry",
+        title="Investigación de la SEC por Fraude Fiscal",
         description="Investigación de la SEC por presunto fraude fiscal, liderada por Sean Cahill.",
         client_name="Sean Cahill",
         lawyer_name="Harvey Specter",
@@ -91,7 +91,7 @@ SEED_CASES = [
     ),
     dict(
         practice_area=PracticeArea.COMMERCIAL,
-        title="Hostile Takeover Defense",
+        title="Defensa contra Adquisición Hostil",
         description="Defensa contra intento de adquisición hostil por Charles Forstman.",
         client_name="Charles Forstman",
         lawyer_name="Louis Litt",
@@ -103,7 +103,7 @@ SEED_CASES = [
     ),
     dict(
         practice_area=PracticeArea.CIVIL,
-        title="Breach of Contract Claim",
+        title="Reclamo por Incumplimiento de Contrato",
         description="Reclamo por incumplimiento de contrato presentado por Tara Messer.",
         client_name="Tara Messer",
         lawyer_name="Rachel Zane",
@@ -114,7 +114,7 @@ SEED_CASES = [
     ),
     dict(
         practice_area=PracticeArea.ADMINISTRATIVE,
-        title="Regulatory Compliance Review",
+        title="Revisión de Cumplimiento Regulatorio",
         description="Revisión de cumplimiento regulatorio solicitada por Cameron Dennis.",
         client_name="Cameron Dennis",
         lawyer_name="Robert Zane",
@@ -125,7 +125,7 @@ SEED_CASES = [
     ),
     dict(
         practice_area=PracticeArea.CONSTITUTIONAL,
-        title="Firm Name Dispute Arbitration",
+        title="Arbitraje por Disputa del Nombre de la Firma",
         description="Arbitraje por disputa sobre el uso del nombre de la firma, con Edward Darby.",
         client_name="Edward Darby",
         lawyer_name="Jessica Pearson",
