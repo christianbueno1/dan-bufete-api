@@ -1,5 +1,4 @@
 # src/dan_bufete_api/models.py
-
 import enum
 from datetime import date, datetime
 

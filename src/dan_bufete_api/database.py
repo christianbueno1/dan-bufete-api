@@ -1,5 +1,4 @@
 # src/dan_bufete_api/database.py
-
 from collections.abc import Generator
 
 from sqlalchemy import create_engine
